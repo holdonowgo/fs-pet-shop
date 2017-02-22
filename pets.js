@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 if (process.argv.length < 3) {
     console.error(
         'Usage: node pets.js [read | create | update | destroy]'
@@ -19,19 +21,42 @@ switch (argument) {
         break;
     case 'create':
         create_pet();
-        // fsp.writeFile('pets.json', 'hello world')
-        //     .then(function() {
-        //         return fsp.readFile('/tmp/hello1.txt', {
-        //             encoding: 'utf8'
-        //         });
-        //     })
-        //     .then(function(contents) {});
         break;
     case 'update':
         update_pet();
         break;
+
+    case 'destroy':
+        destroy_pet();
+        break;
     default:
         break;
+}
+
+function destroy_pet() {
+    let idx = process.argv[3];
+    fsp.readFile('pets.json', {
+            encoding: 'utf8'
+        })
+        .then(function(text) {
+            return JSON.parse(text);
+        })
+        .then(function(arr) {
+            const idx = process.argv[3]
+            if (!idx) {
+                console.error(
+                    'Usage: node pets.js destroy INDEX'
+                );
+                process.exit(1);
+            }
+            let pet = arr[idx];
+            arr.splice(idx, 1);
+            console.log(pet);
+            return JSON.stringify(arr);
+        })
+        .then(function(jsonStr) {
+            fsp.writeFile('pets.json', jsonStr);
+        });
 }
 
 function update_pet() {
