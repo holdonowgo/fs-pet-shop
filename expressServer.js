@@ -15,6 +15,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+// app.use(function (req, res, next) {
+//   res.status(404).send("Not Found")
+// })
+
+app.get('/', function(req, res) {
+    res.set('Content-Type', 'text/plain');
+    res.status(404).send("Not Found");
+});
+
+app.use(function(err, req, res, next) {
+    console.error(err.stack)
+    res.status(500).send('Internal Server Error')
+})
 
 app.get('/pets', function(req, res) {
     fs.readFile(petsPath, 'utf8', function(err, petsJSON) {
