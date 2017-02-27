@@ -1,69 +1,68 @@
 'use strict';
+/*jshint esversion: 6 */
 
-let fs = require('fs');
-let fsp = require('fs-promise');
-let path = require('path');
-let petsPath = path.join(__dirname, 'pets.json');
+// let fs = require('fs');
+const fsp = require('fs-promise');
+const path = require('path');
+const petsPath = path.join(__dirname, 'pets.json');
 
-let express = require('express');
-let app = express();
-let port = process.env.PORT || 8000;
-let bodyParser = require('body-parser');
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 8000;
+const bodyParser = require('body-parser');
 
 app.disable('x-powered-by');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-// app.use(function (req, res, next) {
-//   res.status(404).send("Not Found")
-// })
 
-app.get('/', function(req, res) {
+app.get('/', (req, res) => {
     res.set('Content-Type', 'text/plain');
     res.status(404).send("Not Found");
 });
 
-app.use(function(err, req, res, next) {
+app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Internal Server Error')
 })
 
-app.get('/pets', function(req, res) {
-    fs.readFile(petsPath, 'utf8', function(err, petsJSON) {
-        if (err) {
+app.get('/pets', (req, res) => {
+    fsp.readFile(petsPath, 'utf8')
+        .then((rs) => {
+
+            let pets = JSON.parse(rs);
+
+            res.set('Content-Type', 'application/json');
+            res.send(pets);
+        })
+        .catch((err) => {
             console.error(err.stack);
             return res.sendStatus(500);
-        }
-
-        let pets = JSON.parse(petsJSON);
-
-        res.set('Content-Type', 'application/json');
-        res.send(pets);
-    });
+        });
 });
 
-app.get('/pets/:id', function(req, res) {
-    fs.readFile(petsPath, 'utf8', function(err, petsJSON) {
-        if (err) {
+app.get('/pets/:idx', (req, res) => {
+    fsp.readFile(petsPath, 'utf8')
+        .then((rs) => {
+            let idx = Number.parseInt(req.params.idx);
+            let pets = JSON.parse(rs);
+
+            if (idx < 0 || idx >= pets.length || Number.isNaN(idx)) {
+                res.set('Content-Type', 'text/plain');
+                return res.sendStatus(404);
+            }
+
+            res.set('Content-Type', 'application/json');
+            res.send(pets[idx]);
+        })
+        .catch((err) => {
             console.error(err.stack);
             return res.sendStatus(500);
-        }
-
-        let id = Number.parseInt(req.params.id);
-        let pets = JSON.parse(petsJSON);
-
-        if (id < 0 || id >= pets.length || Number.isNaN(id)) {
-            res.set('Content-Type', 'text/plain');
-            return res.sendStatus(404);
-        }
-
-        res.set('Content-Type', 'application/json');
-        res.send(pets[id]);
-    });
+        });
 });
 
-app.post('/pets', function(req, res) {
+app.post('/pets', (req, res) => {
 
     let age = Number.parseInt(req.body.age);
     let kind = req.body.kind;
@@ -74,45 +73,47 @@ app.post('/pets', function(req, res) {
         res.body = 'Bad Request';
         res.sendStatus(400);
     }
-    // let petJSON = res.json(req.body);
 
-    fsp.readFile(petsPath, {
-            encoding: 'utf8'
-        })
-        .then(function(text) {
-            return JSON.parse(text);
-        })
-        .then(function(arr) {
+    readFile(petsPath)
+        .then((petsArray) => {
             let new_pet = {
                 age: parseInt(age, 10),
                 kind: kind,
                 name: name
             };
-            arr.push(new_pet);
 
-            // console.log(new_pet);
-            // return JSON.stringify(arr);
-            fsp.writeFile(petsPath, JSON.stringify(arr))
-                .then(function() {
+            petsArray.push(new_pet);
+
+            fsp.writeFile(petsPath, JSON.stringify(petsArray))
+                .then(() => {
                     res.set('Content-Type', 'application/json');
                     res.send(new_pet);
                 });
         })
-        // .then(function(jsonStr) {
-        //     fsp.writeFile(petsPath, jsonStr);
-        // })
-        .catch(function(err) {
+        .catch((err) => {
             console.error(err.stack);
             return res.sendStatus(500);
         });
 });
-// });
 
-app.use(function(req, res) {
+function readFile(petsPath) {
+
+    fsp.readFile(petsPath, {
+            encoding: 'utf8'
+        })
+        .then((text) => {
+            return JSON.parse(text);
+        })
+        .catch((err) => {
+            console.error(err.stack);
+        });
+};
+
+app.use((req, res) => {
     res.sendStatus(404);
 });
 
-app.listen(port, function() {
+app.listen(port, () => {
     console.log('Listening on port', port);
 });
 
