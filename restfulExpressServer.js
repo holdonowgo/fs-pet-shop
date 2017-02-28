@@ -18,9 +18,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-// app.use(function (req, res, next) {
-//   res.status(404).send("Not Found")
-// })
 
 app.get('/', (req, res) => {
     res.set('Content-Type', 'text/plain');
@@ -33,17 +30,16 @@ app.use((err, req, res, next) => {
 })
 
 app.get('/pets', (req, res) => {
-    fs.readFile(petsPath, 'utf8', (err, petsJSON) => {
-        if (err) {
+
+    readFile(petsPath)
+        .then((pets) => {
+            res.set('Content-Type', 'application/json');
+            res.send(pets);
+        })
+        .catch((err) => {
             console.error(err.stack);
             return res.sendStatus(500);
-        }
-
-        let pets = JSON.parse(petsJSON);
-
-        res.set('Content-Type', 'application/json');
-        res.send(pets);
-    });
+        });
 });
 
 app.get('/pets/:id', (req, res) => {
@@ -82,12 +78,7 @@ app.patch('/pets/:id', (req, res) => {
         res.sendStatus(400);
     }
 
-    fsp.readFile(petsPath, {
-            encoding: 'utf8'
-        })
-        .then((text) => {
-            return JSON.parse(text);
-        })
+    readFile(petsPath)
         .then((pets) => {
             let patch_pet = pets[req.params.id];
             patch_pet.age = age || patch_pet.age;
@@ -122,12 +113,7 @@ app.post('/pets', (req, res) => {
         res.sendStatus(400);
     };
 
-    fsp.readFile(petsPath, {
-            encoding: 'utf8'
-        })
-        .then((text) => {
-            return JSON.parse(text);
-        })
+    readFile(petsPath)
         .then((arr) => {
             let new_pet = {
                 age: parseInt(age, 10),
@@ -157,12 +143,7 @@ app.delete('/pets/:id', (req, res) => {
         res.sendStatus(400);
     };
 
-    fsp.readFile(petsPath, {
-            encoding: 'utf8'
-        })
-        .then((text) => {
-            return JSON.parse(text);
-        })
+    readFile(petsPath)
         .then((pets) => {
             let pet = pets.splice(idx, 1)[0];
 
@@ -178,6 +159,19 @@ app.delete('/pets/:id', (req, res) => {
         });
 });
 
+function readFile(petsPath) {
+
+    return fsp.readFile(petsPath, {
+            encoding: 'utf8'
+        })
+        .then((text) => {
+            return JSON.parse(text);
+        })
+        .catch((err) => {
+            console.error(err.stack);
+        });
+};
+
 app.use((req, res) => {
     res.sendStatus(404);
 });
@@ -185,5 +179,8 @@ app.use((req, res) => {
 app.listen(port, () => {
     console.log('Listening on port', port);
 });
+
+module.exports = app;
+
 
 module.exports = app;

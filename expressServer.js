@@ -28,11 +28,9 @@ app.use((err, req, res, next) => {
 })
 
 app.get('/pets', (req, res) => {
-    fsp.readFile(petsPath, 'utf8')
-        .then((rs) => {
 
-            let pets = JSON.parse(rs);
-
+    readFile(petsPath)
+        .then((pets) => {
             res.set('Content-Type', 'application/json');
             res.send(pets);
         })
@@ -43,10 +41,10 @@ app.get('/pets', (req, res) => {
 });
 
 app.get('/pets/:idx', (req, res) => {
-    fsp.readFile(petsPath, 'utf8')
-        .then((rs) => {
+
+    readFile(petsPath)
+        .then((pets) => {
             let idx = Number.parseInt(req.params.idx);
-            let pets = JSON.parse(rs);
 
             if (idx < 0 || idx >= pets.length || Number.isNaN(idx)) {
                 res.set('Content-Type', 'text/plain');
@@ -98,7 +96,7 @@ app.post('/pets', (req, res) => {
 
 function readFile(petsPath) {
 
-    fsp.readFile(petsPath, {
+    return fsp.readFile(petsPath, {
             encoding: 'utf8'
         })
         .then((text) => {
